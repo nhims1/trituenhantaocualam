@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RSA Digital Signature - Bài 2</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 1200px;
+            width: 100%;
+            padding: 40px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 20px;
+        }
+
+        .header h1 {
+            color: #333;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 1.1em;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #eee;
+            flex-wrap: wrap;
+        }
+
+        .tab-button {
+            padding: 12px 25px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-size: 1em;
+            color: #666;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+        }
+
+        .tab-button.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+
+        .tab-button:hover {
+            color: #667eea;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+            font-size: 1em;
+        }
+
+        textarea, input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.95em;
+            transition: border-color 0.3s;
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        textarea:focus, input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+
+        .output-section {
+            background: #f9f9f9;
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 25px;
+        }
+
+        .output-section h3 {
+            color: #333;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .output-box {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 15px;
+            max-height: 250px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            word-break: break-all;
+            color: #555;
+        }
+
+        .copy-btn {
+            display: inline-block;
+            padding: 5px 10px;
+            background: #667eea;
+            color: white;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85em;
+            margin-top: 10px;
+            border: none;
+            transition: background 0.3s;
+        }
+
+        .copy-btn:hover {
+            background: #764ba2;
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .alert-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        .alert-warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeeba;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .result-item {
+            margin-bottom: 15px;
+        }
+
+        .result-label {
+            font-weight: 600;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .info-box {
+            background: #f0f0f0;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+        }
+
+        .info-box strong {
+            color: #667eea;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.8em;
+            }
+
+            .container {
+                padding: 20px;
+            }
+
+            .tabs {
+                flex-direction: column;
+            }
+
+            .tab-button {
+                width: 100%;
+                text-align: left;
+            }
+        }
+
+        .icon {
+            display: inline-block;
+            font-size: 1.2em;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .file-info {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .file-info-item {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 5px;
+            border-left: 4px solid #667eea;
+        }
+
+        .file-info-item strong {
+            color: #667eea;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .file-info-item span {
+            color: #333;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><span class="icon">✍️</span> RSA Digital Signature</h1>
+            <p>Buổi 6 - Bài 2: Ký và Xác Thực Chữ Ký Số</p>
+        </div>
+
+        <div class="tabs">
+            <button class="tab-button active" onclick="switchTab('message')">📝 Tin Nhắn</button>
+            <button class="tab-button" onclick="switchTab('sign')">✍️ Ký Tin Nhắn</button>
+            <button class="tab-button" onclick="switchTab('verify')">✅ Xác Thực</button>
+            <button class="tab-button" onclick="switchTab('keys')">🔑 Khóa RSA</button>
+        </div>
+
+        <!-- Tab 1: Tin Nhắn -->
+        <div id="message" class="tab-content active">
+            <h2><span class="icon">📝</span> Quản Lý Tin Nhắn</h2>
+            <p style="color: #666; margin-top: 10px; margin-bottom: 20px;">Quản lý nội dung tin nhắn cần ký. Dữ liệu sẽ được lưu vào file <code>message.txt</code></p>
+            
+            <div class="form-group">
+                <label for="messageContent">Nội dung tin nhắn:</label>
+                <textarea id="messageContent" placeholder="Nhập tin nhắn cần ký...">Hello World</textarea>
+            </div>
+
+            <div class="button-group">
+                <button class="btn-primary" onclick="loadMessage()">📥 Tải Tin Nhắn</button>
+                <button class="btn-primary" onclick="saveMessage()">💾 Lưu Tin Nhắn</button>
+            </div>
+
+            <div id="messageAlert"></div>
+
+            <div class="info-box" style="margin-top: 30px;">
+                <strong>📌 Thông tin:</strong><br>
+                • File lưu: <code>message.txt</code><br>
+                • Độ dài tin nhắn sẽ được hiển thị khi lưu<br>
+                • Tin nhắn sẽ được sử dụng cho việc ký
+            </div>
+        </div>
+
+        <!-- Tab 2: Ký Tin Nhắn -->
+        <div id="sign" class="tab-content">
+            <h2><span class="icon">✍️</span> Ký Tin Nhắn</h2>
+            <p style="color: #666; margin-top: 10px; margin-bottom: 20px;">Ký tin nhắn bằng khóa riêng RSA với thuật toán SHA-256</p>
+            
+            <div class="form-group">
+                <label for="messageToSign">Tin nhắn (lấy từ message.txt):</label>
+                <textarea id="messageToSign" placeholder="Nhập hoặc tải tin nhắn từ file...">Hello World</textarea>
+                <button class="btn-secondary" onclick="loadMessageForSign()" style="margin-top: 10px;">📥 Tải từ File</button>
+            </div>
+
+            <button class="btn-primary" onclick="signMessage()">✍️ Ký Tin Nhắn</button>
+
+            <div id="signAlert"></div>
+
+            <div class="output-section" id="signOutput" style="display: none;">
+                <h3><span class="icon">✅</span> Kết Quả Ký</h3>
+                
+                <div class="result-item">
+                    <div class="result-label">Tin nhắn gốc:</div>
+                    <div id="signedMessage" class="output-box"></div>
+                </div>
+
+                <div class="result-item">
+                    <div class="result-label">Chữ ký (Base64):</div>
+                    <div id="signatureB64" class="output-box"></div>
+                    <button class="copy-btn" onclick="copyToClipboard('signatureB64')">📋 Sao chép</button>
+                </div>
+
+                <div class="result-item">
+                    <div class="result-label">Chữ ký (Hex):</div>
+                    <div id="signatureHex" class="output-box"></div>
+                    <button class="copy-btn" onclick="copyToClipboard('signatureHex')">📋 Sao chép</button>
+                </div>
+
+                <div class="file-info">
+                    <div class="file-info-item">
+                        <strong>📊 Kích Thước Tin Nhắn</strong>
+                        <span id="messageSize">0</span> bytes
+                    </div>
+                    <div class="file-info-item">
+                        <strong>🔐 Kích Thước Chữ Ký</strong>
+                        <span id="signatureSize">0</span> bytes
+                    </div>
+                    <div class="file-info-item">
+                        <strong>🔢 Thuật Toán Hash</strong>
+                        <span id="hashAlgo">SHA-256</span>
+                    </div>
+                    <div class="file-info-item">
+                        <strong>📦 Kiểu Padding</strong>
+                        <span id="paddingType">PSS</span>
+                    </div>
+                </div>
+
+                <div class="info-box" style="margin-top: 20px;">
+                    <strong>💾 Lưu ý:</strong><br>
+                    • Chữ ký được lưu vào file <code>signature.bin</code><br>
+                    • Sao chép chữ ký (Base64) để xác thực trên các hệ thống khác<br>
+                    • Chữ ký hợp lệ trong 5 năm (theo tiêu chuẩn ngành)
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 3: Xác Thực -->
+        <div id="verify" class="tab-content">
+            <h2><span class="icon">✅</span> Xác Thực Chữ Ký</h2>
+            <p style="color: #666; margin-top: 10px; margin-bottom: 20px;">Xác thực chữ ký bằng khóa công khai RSA</p>
+            
+            <div class="form-group">
+                <label for="messageToVerify">Tin nhắn:</label>
+                <textarea id="messageToVerify" placeholder="Nhập tin nhắn...">Hello World</textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="signatureToVerify">Chữ ký (Base64):</label>
+                <textarea id="signatureToVerify" placeholder="Dán chữ ký Base64 ở đây..."></textarea>
+            </div>
+
+            <button class="btn-primary" onclick="verifySignature()">✅ Xác Thực Chữ Ký</button>
+
+            <div id="verifyAlert"></div>
+
+            <div class="output-section" id="verifyOutput" style="display: none;">
+                <h3><span class="icon">🔍</span> Kết Quả Xác Thực</h3>
+                <div id="verifyResult" class="output-box"></div>
+                <div id="verifyDetails" style="margin-top: 15px;"></div>
+            </div>
+
+            <div class="info-box" style="margin-top: 30px;">
+                <strong>📌 Hướng dẫn:</strong><br>
+                1. Nhập tin nhắn gốc<br>
+                2. Dán chữ ký (Base64) từ kết quả ký tin nhắn<br>
+                3. Bấm "Xác Thực Chữ Ký" để kiểm tra<br>
+                4. Nếu chữ ký hợp lệ, sẽ nhận được thông báo ✅
+            </div>
+        </div>
+
+        <!-- Tab 4: Khóa RSA -->
+        <div id="keys" class="tab-content">
+            <h2><span class="icon">🔑</span> Quản Lý Khóa RSA</h2>
+            <p style="color: #666; margin-top: 10px; margin-bottom: 20px;">Xem các khóa RSA được sử dụng</p>
+            
+            <button class="btn-primary" onclick="loadKeys()">🔑 Tải Khóa</button>
+
+            <div id="keysAlert"></div>
+
+            <div id="keysOutput" style="display: none;">
+                <div class="result-item" style="margin-top: 30px;">
+                    <div class="result-label">🔓 Khóa Công Khai (Public Key):</div>
+                    <div id="publicKeyDisplay" class="output-box"></div>
+                    <button class="copy-btn" onclick="copyToClipboard('publicKeyDisplay')">📋 Sao chép</button>
+                </div>
+
+                <div class="result-item">
+                    <div class="result-label">🔐 Khóa Riêng (Private Key):</div>
+                    <div id="privateKeyDisplay" class="output-box"></div>
+                    <button class="copy-btn" onclick="copyToClipboard('privateKeyDisplay')">📋 Sao chép</button>
+                </div>
+
+                <div class="info-box" style="margin-top: 20px;">
+                    <strong>⚠️ Cảnh báo:</strong><br>
+                    • Khóa riêng là BẮT BUỘC phải giữ bí mật!<br>
+                    • Không bao giờ chia sẻ khóa riêng với ai<br>
+                    • Khóa công khai có thể chia sẻ tự do<br>
+                    • Chỉ khóa riêng mới có thể tạo chữ ký hợp lệ
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function switchTab(tabName) {
+            const contents = document.querySelectorAll('.tab-content');
+            contents.forEach(content => content.classList.remove('active'));
+
+            const buttons = document.querySelectorAll('.tab-button');
+            buttons.forEach(button => button.classList.remove('active'));
+
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        async function loadMessage() {
+            try {
+                const response = await fetch('/api/message');
+                const data = await response.json();
+
+                if (data.success) {
+                    document.getElementById('messageContent').value = data.message;
+                    document.getElementById('messageAlert').innerHTML = 
+                        '<div class="alert alert-success">✅ Tin nhắn tải thành công!</div>';
+                } else {
+                    document.getElementById('messageAlert').innerHTML = 
+                        `<div class="alert alert-error">❌ Lỗi: ${data.error}</div>`;
+                }
+            } catch (error) {
+                document.getElementById('messageAlert').innerHTML = 
+                    `<div class="alert alert-error">❌ Lỗi: ${error.message}</div>`;
+            }
+        }
+
+        async function saveMessage() {
+            try {
+                const message = document.getElementById('messageContent').value;
+                
+                if (!message.trim()) {
+                    document.getElementById('messageAlert').innerHTML = 
+                        '<div class="alert alert-error">❌ Vui lòng nhập tin nhắn!</div>';
+                    return;
+                }
+
+                document.getElementById('messageAlert').innerHTML = 
+                    '<div class="alert alert-info"><span class="loading"></span> Đang lưu...</div>';
+
+                const response = await fetch('/api/message', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({message: message})
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    document.getElementById('messageAlert').innerHTML = 
+                        `<div class="alert alert-success">✅ Tin nhắn lưu thành công! (${message.length} bytes)</div>`;
+                } else {
+                    document.getElementById('messageAlert').innerHTML = 
+                        `<div class="alert alert-error">❌ Lỗi: ${data.error}</div>`;
+                }
+            } catch (error) {
+                document.getElementById('messageAlert').innerHTML = 
+                    `<div class="alert alert-error">❌ Lỗi: ${error.message}</div>`;
+            }
+        }
+
+        async function loadMessageForSign() {
+            try {
+                const response = await fetch('/api/message');
+                const data = await response.json();
+
+                if (data.success) {
+                    document.getElementById('messageToSign').value = data.message;
+                } else {
+                    alert('Lỗi tải tin nhắn: ' + data.error);
+                }
+            } catch (error) {
+                alert('Lỗi: ' + error.message);
+            }
+        }
+
+        async function signMessage() {
+            try {
+                const message = document.getElementById('messageToSign').value;
+                const alertDiv = document.getElementById('signAlert');
+
+                if (!message.trim()) {
+                    alertDiv.innerHTML = '<div class="alert alert-error">❌ Vui lòng nhập tin nhắn!</div>';
+                    return;
+                }
+
+                alertDiv.innerHTML = '<div class="alert alert-info"><span class="loading"></span> Đang ký tin nhắn...</div>';
+
+                const response = await fetch('/api/sign', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({message: message})
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    document.getElementById('signedMessage').textContent = message;
+                    document.getElementById('signatureB64').textContent = data.signature_b64;
+                    document.getElementById('signatureHex').textContent = data.signature_hex;
+                    document.getElementById('messageSize').textContent = data.message_size;
+                    document.getElementById('signatureSize').textContent = data.signature_size;
+                    document.getElementById('hashAlgo').textContent = data.hash_algorithm;
+                    document.getElementById('paddingType').textContent = data.padding;
+                    document.getElementById('signOutput').style.display = 'block';
+                    alertDiv.innerHTML = '<div class="alert alert-success">✅ Ký tin nhắn thành công!</div>';
+                } else {
+                    alertDiv.innerHTML = `<div class="alert alert-error">❌ Lỗi: ${data.error}</div>`;
+                }
+            } catch (error) {
+                document.getElementById('signAlert').innerHTML = 
+                    `<div class="alert alert-error">❌ Lỗi: ${error.message}</div>`;
+            }
+        }
+
+        async function verifySignature() {
+            try {
+                const message = document.getElementById('messageToVerify').value;
+                const signature = document.getElementById('signatureToVerify').value;
+                const alertDiv = document.getElementById('verifyAlert');
+
+                if (!message.trim()) {
+                    alertDiv.innerHTML = '<div class="alert alert-error">❌ Vui lòng nhập tin nhắn!</div>';
+                    return;
+                }
+
+                if (!signature.trim()) {
+                    alertDiv.innerHTML = '<div class="alert alert-error">❌ Vui lòng nhập chữ ký!</div>';
+                    return;
+                }
+
+                alertDiv.innerHTML = '<div class="alert alert-info"><span class="loading"></span> Đang xác thực...</div>';
+
+                const response = await fetch('/api/verify', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({message: message, signature: signature})
+                });
+
+                const data = await response.json();
+
+                if (data.success && data.valid) {
+                    document.getElementById('verifyResult').innerHTML = 
+                        `<strong style="color: green; font-size: 1.2em;">✅ ${data.message}</strong>`;
+                    document.getElementById('verifyDetails').innerHTML = 
+                        '<div class="alert alert-success">Chữ ký có giá trị và được xác thực bằng khóa công khai!</div>';
+                    document.getElementById('verifyOutput').style.display = 'block';
+                    alertDiv.innerHTML = '<div class="alert alert-success">✅ Xác thực thành công!</div>';
+                } else {
+                    document.getElementById('verifyResult').innerHTML = 
+                        `<strong style="color: red; font-size: 1.2em;">❌ ${data.message}</strong>`;
+                    document.getElementById('verifyDetails').innerHTML = 
+                        '<div class="alert alert-error">Chữ ký không hợp lệ hoặc tin nhắn đã bị thay đổi!</div>';
+                    document.getElementById('verifyOutput').style.display = 'block';
+                    alertDiv.innerHTML = '<div class="alert alert-error">❌ Chữ ký không hợp lệ!</div>';
+                }
+            } catch (error) {
+                document.getElementById('verifyAlert').innerHTML = 
+                    `<div class="alert alert-error">❌ Lỗi: ${error.message}</div>`;
+            }
+        }
+
+        async function loadKeys() {
+            try {
+                const alertDiv = document.getElementById('keysAlert');
+                alertDiv.innerHTML = '<div class="alert alert-info"><span class="loading"></span> Đang tải khóa...</div>';
+
+                const response = await fetch('/api/keys');
+                const data = await response.json();
+
+                if (data.success) {
+                    if (data.keys.public_key) {
+                        document.getElementById('publicKeyDisplay').textContent = data.keys.public_key;
+                    }
+                    if (data.keys.private_key) {
+                        document.getElementById('privateKeyDisplay').textContent = data.keys.private_key;
+                    }
+                    document.getElementById('keysOutput').style.display = 'block';
+                    alertDiv.innerHTML = '<div class="alert alert-success">✅ Khóa tải thành công!</div>';
+                } else {
+                    alertDiv.innerHTML = `<div class="alert alert-error">❌ Lỗi: ${data.error}</div>`;
+                }
+            } catch (error) {
+                document.getElementById('keysAlert').innerHTML = 
+                    `<div class="alert alert-error">❌ Lỗi: ${error.message}</div>`;
+            }
+        }
+
+        function copyToClipboard(elementId) {
+            const element = document.getElementById(elementId);
+            const text = element.textContent;
+            
+            navigator.clipboard.writeText(text).then(() => {
+                const button = event.target;
+                const originalText = button.textContent;
+                button.textContent = '✅ Đã sao chép!';
+                setTimeout(() => {
+                    button.textContent = originalText;
+                }, 2000);
+            }).catch(() => {
+                alert('Không thể sao chép!');
+            });
+        }
+
+        // Auto-load message when page loads
+        window.addEventListener('load', () => {
+            loadMessage();
+        });
+    </script>
+</body>
+</html>
